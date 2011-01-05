@@ -23,7 +23,10 @@ sub new {
 	my ($class, $sock) = @_;
 	my $self = $class->SUPER::new($sock);
 	warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
+
+	# TODO singleton maken
 	$ldapdata = new LdapData();
+
 	return $self;
 }
 
@@ -67,32 +70,32 @@ sub search {
 	if ($reqData->{'scope'}) {
 		my $objectClass;
 		my $uid;
-warn 1;
+
 		if ($reqData->{filter}->{'and'}) {
 			$objectClass = $reqData->{filter}->{'and'}->[0]->{equalityMatch}->{assertionValue};
 			if ( $reqData->{filter}->{'and'}->[1]->{'or'}) {
-warn 2;
+
 				$uid = $reqData->{filter}->{'and'}->[1]->{'or'}->[0]->{equalityMatch}->{assertionValue};
 				$attributeDesc = $reqData->{filter}->{'and'}->{'or'}->[0]->{equalityMatch}->{attributeDesc};
 			}
 			else {
-warn 3;
+
 				$uid = $reqData->{filter}->{'and'}->[1]->{equalityMatch}->{assertionValue};
 				$attributeDesc = $reqData->{filter}->{'and'}->[1]->{equalityMatch}->{attributeDesc};
 			}
-warn 4;
+
 		}
 		elsif ($reqData->{filter}->{equalityMatch}) {
-warn 5;
+
 				$uid = $reqData->{filter}->{'and'}->{'or'}->[1]->{equalityMatch}->{assertionValue};
 			$objectClass = $reqData->{filter}->{equalityMatch}->{assertionValue};
 		}
-warn 6;
+
 		warn "DEBUG: ObjectClass=$objectClass uid=$uid\n";
 
 		if ($objectClass eq 'posixAccount') {
 			if ($attributeDesc eq 'uidNumber') {
-				push @entries, getPosixAccountByUid($base, $uid);
+				push @entries, getPosixAccountByUidNumber($base, $uid);
 			}
 			else {
 				my @posixAccounts = getPosixAccounts($base, $uid);
@@ -154,12 +157,13 @@ warn 6;
 		# base
 	}
 
+	print Dumper(@entries);
 	return RESULT_OK, @entries;
 }
 
 sub getPosixGroupsByUid
 {
-	exit 0;
+	die("...");
 	my $base = shift;
 	my $um = shift;
 
@@ -198,41 +202,21 @@ sub getPosixGroupsByMemberUid
 	my $base = shift;
 	my $memberuid = shift;
 
-	my %passwd;
-	open(my $fh, '<', './passwd')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$passwd{$row[0]} = [ @row ];
-	}
-	close($fh);
-
-	my %group;
-	open($fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
-
 	my @entries;
 
-	if ($passwd{$memberuid}) {
-		my $gid = $passwd{$memberuid}->[2];
+	my $user = $ldapdata->{users}->{$memberuid};
 
-		for my $group (values %group) {
-			if ($group->[2] == $gid) {
+	if ($user) {
+		my $gidn = $user->{gidNumber};
+
+		for my $obj (values %{$ldapdata->{groups}}) {
+			if ($obj->{gid} == $gidn) {
 				my $posixGroup = {
-					'dn' => "cn=".$group->[0].", ou=Groups, $base",
-					'cn' => $group->[0],
-					'userPassword' => $group->[1],
-					'gidNumber' => $group->[2],
-					'memberUid' => $group->[3],
+					'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
+					'cn' => $obj->{gid},
+					'userPassword' => $obj->{userPassword},
+					'gidNumber' => $obj->{gidNumber},
+					'memberUid' => $obj->{memberUid},
 					'uniqueMember' => '',
 					'objectClass' => 'posixGroup',
 				};
@@ -246,16 +230,18 @@ sub getPosixGroupsByMemberUid
 		}
 	}
 	
-	for my $group (values %group) {
-		my @members = split ',', $group->[3];
+	for my $obj (values %{$ldapdata->{groups}}) {
+		# 
+		# TODO my @members = split ',', $group->members;
+		my @members = ();
 	 	for my $member (@members) {
 			if ($member eq $memberuid) {
 				my $posixGroup = {
-					'dn' => "cn=".$group->[0].", ou=Groups, $base",
-					'cn' => $group->[0],
-					'userPassword' => $group->[1],
-					'gidNumber' => $group->[2],
-					'memberUid' => $group->[3],
+					'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
+					'cn' => $obj->{gid},
+					'userPassword' => $obj->{userPassword},
+					'gidNumber' => $obj->{gidNumber},
+					'memberUid' => $obj->{memberUid},
 					'uniqueMember' => '',
 					'objectClass' => 'posixGroup',
 				};
@@ -275,66 +261,29 @@ sub getPosixGroupsByMemberUid
 
 sub getPosixGroupsByUniqueMember
 {
-	exit 0;
+	die("...");
+
 	my $base = shift;
 	my $um = shift;
-
-	my %passwd;
-	open(my $fh, '<', './passwd')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$passwd{$row[0]} = [ @row ];
-	}
-	close($fh);
-
-	my %group;
-	open($fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
-
-	my @entries;
-
-	
-	return ();
 }
 
 
 sub getPosixGroupsByGidNumber
 {
 	my $base = shift;
-	my $gid = shift;
-
-	my %group;
-	open(my $fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
+	my $gidNumber = shift;
 
 	my @entries;
 
-	foreach my $group (values %group) {
-		next unless $group->[2] == $gid;
+	foreach my $obj (values %{$ldapdata->{groups}}) {
+		next unless $obj->{gidNumber} == $gidNumber;
 
 		my $posixGroup = {
-			'dn' => "cn=".$group->[0].", ou=Groups, $base",
-			'cn' => $group->[0],
-			'userPassword' => $group->[1],
-			'gidNumber' => $group->[2],
-			'memberUid' => $group->[3],
+			'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
+			'cn' => $obj->{gid},
+			'userPassword' => $obj->{userPassword},
+			'gidNumber' => $obj->{gidNumber},
+			'memberUid' => $obj->{memberUid},
 			'uniqueMember' => '',
 			'objectClass' => 'posixGroup',
 		};
@@ -355,41 +304,31 @@ sub getPosixGroupsByCn
 	my $base = shift;
 	my $cn = shift;
 
-	my %group;
-	open(my $fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
-
 	my @entries;
 
 	if ($cn) {
-		if (exists $group{$cn}) {
+		my $obj = $ldapdata->{groups}->{cn}
+			or return ();
 
-			my $posixGroup = {
-				'dn' => "cn=".$cn.", ou=Groups, $base",
-				'cn' => $cn,
-				'userPassword' => $group{$cn}->[1],
-				'gidNumber' => $group{$cn}->[2],
-				'memberUid' => $group{$cn}->[3],
-				'uniqueMember' => '',
-				'objectClass' => 'posixGroup',
-			};
+		my $posixGroup = {
+			'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
+			'cn' => $obj->{gid},
+			'userPassword' => $obj->{userPassword},
+			'gidNumber' => $obj->{gidNumber},
+			'memberUid' => $obj->{memberUid},
+			'uniqueMember' => '',
+			'objectClass' => 'posixGroup',
+		};
 
-			my $entry = Net::LDAP::Entry->new;
-			$entry->dn($posixGroup->{dn});
+		my $entry = Net::LDAP::Entry->new;
+		$entry->dn($posixGroup->{dn});
 
-			$entry->add(%{$posixGroup});
-			push @entries, $entry;
+		$entry->add(%{$posixGroup});
+		push @entries, $entry;
 
-			return @entries;
-		}
+		return @entries;
 	}
+
 	return ();
 }
 
@@ -397,29 +336,18 @@ sub getAllPosixGroups
 {
 	my $base = shift;
 
-	my %group;
-	open(my $fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
-
 	my @entries;
 
-	foreach my $cn (keys %group) {
+	foreach my $obj (values %{$ldapdata->{groups}}) {
 
 		my $posixGroup = {
-			'dn' => "cn=".$cn.", ou=Groups, $base",
-			'cn' => $cn,
-			'userPassword' => $group{$cn}->[1],
-			'gidNumber' => $group{$cn}->[2],
-			'memberUid' => $group{$cn}->[3],
+			'dn'           => "cn=".$obj->{gid}.", ou=Groups, $base",
+			'cn'           => $obj->{gid},
+			'userPassword' => $obj->{userPassword},
+			'gidNumber'    => $obj->{gidNumber},
+			'memberUid'    => $obj->{memberUid},
 			'uniqueMember' => '',
-			'objectClass' => 'posixGroup',
+			'objectClass'  => 'posixGroup',
 		};
 
 		my $entry = Net::LDAP::Entry->new;
@@ -449,39 +377,28 @@ sub getPosixGroups
 	return getPosixAccounts($base, $uid);
 }
 
-sub getPosixAccountByUid
+sub getPosixAccountByUidNumber
 {
 	my $base = shift;
-	my $uid = shift;
-
-	my %passwd;
-	open(my $fh, '<', './passwd')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$passwd{$row[0]} = [ @row ];
-	}
-	close($fh);
+	my $uidNumber = shift;
 
 	my @entries;
 
-	for my $passwd (values %passwd) {
-		next unless $passwd->[2] == $uid;
+	for my $obj (values %{$ldapdata->{users}}) {
+		next unless $obj->{uidNumber} == $uidNumber;
 
 		my $posixAccount = {
-			'dn' => "cn=".$passwd->[0].", ou=Users, $base",
-			'uid' => $passwd->[0],
-			'userPassword' => $passwd->[1],
-			'uidNumber' => $passwd->[2],
-			'gidNumber' => $passwd->[3],
-			'cn' => $passwd->[0],
-			'homeDirectory' =>$passwd->[5],
-			'loginShell' => $passwd->[6],
-			'gecos' => $passwd->[4],
-			'description' => 'ddddeesssccc',
-			'objectClass' => 'posixAccount',
+			'dn'            => "cn=".$obj->{uid}.", ou=Users, $base",
+			'uid'           => $obj->{uid},
+			'userPassword'  => $obj->{userPassword},
+			'uidNumber'     => $obj->{uidNumber},
+			'gidNumber'     => $obj->{gidNumber},
+			'cn'            => $obj->{uid},
+			'homeDirectory' => $obj->{homeDirectory},
+			'loginShell'    => $obj->{loginShell},
+			'gecos'         => $obj->{gecos},
+			'description'   => 'ddddeesssccc',
+			'objectClass'   => 'posixAccount',
 		};
 
 		my $entry = Net::LDAP::Entry->new;
@@ -508,17 +425,17 @@ sub getPosixAccounts
 		my $dn = "cn=".$uid.", ou=Users, $base";
 	
 		return ( {
-			'dn' => $dn,
-			'uid' => $uid,
-			'userPassword' => $obj->{userPassword},
-			'uidNumber' => $obj->{uidNumber},
-			'gidNumber' => $obj->{gidNumber},
-			'cn' => 'TestCn',
+			'dn'            => $dn,
+			'uid'           => $uid,
+			'userPassword'  => $obj->{userPassword},
+			'uidNumber'     => $obj->{uidNumber},
+			'gidNumber'     => $obj->{gidNumber},
+			'cn'            => 'TestCn',
 			'homeDirectory' => $obj->{homeDirectory},
-			'loginShell' => $obj->{loginShell},
-			'gecos' => $obj->{gecos},
-			'description' => 'ddddeesssccc',
-			'objectClass' => 'posixAccount',
+			'loginShell'    => $obj->{loginShell},
+			'gecos'         => $obj->{gecos},
+			'description'   => 'ddddeesssccc',
+			'objectClass'   => 'posixAccount',
 		} );
 	}
 	else {
@@ -526,18 +443,18 @@ sub getPosixAccounts
 		foreach my $obj (values %{$ldapdata->{users}} ) {
 			my $dn = "cn=".$obj->{uid}.", ou=Users, $base";
 			push(@entries, {
-				'dn' => $dn,
-				'uid' => $obj->{uid},
-				'userPassword' => $obj->{userPassword},
-				'uidNumber' => $obj->{uidNumber},
-				'gidNumber' => $obj->{gidNumber},
-				'cn' => 'testCn',
-				'homeDirectory' => $obj->{homeDirectory},
-				'loginShell' => $obj->{loginShell},
-				'gecos' => $obj->{gecos},
-				'description' => 'ddddeesssccc',
-				'objectClass' => 'posixAccount',
-				} );
+				'dn'             => $dn,
+				'uid'            => $obj->{uid},
+				'userPassword'   => $obj->{userPassword},
+				'uidNumber'      => $obj->{uidNumber},
+				'gidNumber'      => $obj->{gidNumber},
+				'cn'             => 'testCn',
+				'homeDirectory'  => $obj->{homeDirectory},
+				'loginShell'     => $obj->{loginShell},
+				'gecos'          => $obj->{gecos},
+				'description'    => 'ddddeesssccc',
+				'objectClass'    => 'posixAccount',
+			} );
 		}
 		return @entries;
 	}
@@ -549,34 +466,22 @@ sub getShadowAccount
 	my $dn = shift;
 	my $uid = shift;
 
-	my %shadow;
-	open(FH, './shadow')
-		or die($!);
+	my $obj = $ldapdata->{users}->{$uid}
+		or return {};
 
-		while(<FH>) {
-			chomp;
-			my @row = split(':');
-			$shadow{$row[0]} = [ @row ];
-		}
-	close FH;
-
-	if (exists $shadow{$uid}) {
-		return {
-			'dn' => $dn,
-			'uid' => $shadow{$uid}->[0],
-			'userPassword' => $shadow{$uid}->[1],
-			'shadowLastChange' =>$shadow{$uid}->[2],
-			'shadowMax' =>$shadow{$uid}->[3],
-			'shadowMin' =>$shadow{$uid}->[4],
-			'shadowWarning' =>$shadow{$uid}->[5],
-			'shadowInactive' =>$shadow{$uid}->[6],
-			'shadowExpire' => $shadow{$uid}->[7],
-			'shadowFlag' => $shadow{$uid}->[8],
-			'objectClass' => 'shadowAccount',
-		}
-	}
-
-	return {};
+	return { 
+		'dn'               => $dn,
+		'uid'              => $uid,
+		'userPassword'     => $obj->{userPassword},
+		'shadowLastChange' => $obj->{shadowLastChange},
+		'shadowMax'        => $obj->{shadowMax},
+		'shadowMin'        => $obj->{shadowMin},
+		'shadowWarning'    => $obj->{shadowWarning},
+		'shadowInactive'   => $obj->{shadowInactive},
+		'shadowExpire'     => $obj->{shadowExpire},
+		'shadowFlag'       => $obj->{shadowFlag},
+		'objectClass'      => 'shadowAccount',
+	};
 }
 		
 1;

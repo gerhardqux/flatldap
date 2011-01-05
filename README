@@ -42,4 +42,6 @@ gerhtest# perl ./simple-server.pl &
 * Testing
 gerhtest# getent passwd
 
+gerhtest# id bestaatwel
+uid=5001(bestaatwel) gid=5001 groups=5001
 
