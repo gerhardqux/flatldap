@@ -1,4 +1,6 @@
-* Flatldap
+Flatldap
+========
+
   This does not work yet, this code only sets the basic idea.
 * OS setup
 gerhtest# cat /etc/libnss-ldap.conf 
