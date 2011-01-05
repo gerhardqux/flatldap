@@ -1,0 +1,61 @@
+$VAR1 = bless( {
+                 'groups' => {
+                               'bestaatwelgr' => {
+                                                   'gidNumber' => '5001',
+                                                   'uniqueMember' => '',
+                                                   'cn' => 'bestaatwelgr',
+                                                   'userPassword' => 'x',
+                                                   'objectClass' => 'posixGroup',
+                                                   'memberUid' => undef
+                                                 },
+                               'hackersgr' => {
+                                                'gidNumber' => '5000',
+                                                'uniqueMember' => '',
+                                                'cn' => 'hackersgr',
+                                                'userPassword' => 'x',
+                                                'objectClass' => 'posixGroup',
+                                                'memberUid' => 'bestaatwel2'
+                                              },
+                               'bestaatwel2gr' => {
+                                                    'gidNumber' => '5003',
+                                                    'uniqueMember' => '',
+                                                    'cn' => 'bestaatwel2gr',
+                                                    'userPassword' => 'x',
+                                                    'objectClass' => 'posixGroup',
+                                                    'memberUid' => undef
+                                                  }
+                             },
+                 'users' => {
+                              'bestaatwel' => {
+                                                'shadowMax' => '99999',
+                                                'cn' => 'bestaatwel',
+                                                'uidNumber' => '5001',
+                                                'shadowWarning' => '7',
+                                                'shadowInactive' => '0',
+                                                'gecos' => ',,,,',
+                                                'shadowLastChange' => '14914',
+                                                'shadowFlag' => '0',
+                                                'userPassword' => '*',
+                                                'uid' => 'bestaatwel',
+                                                'homeDirectory' => '/home/bestaatwel',
+                                                'description' => 'ddddeesssccc',
+                                                'objectClass' => 'shadowAccount',
+                                                'shadowMin' => '0',
+                                                'gidNumber' => '5001',
+                                                'shadowExpire' => '0',
+                                                'loginShell' => '/home/bash'
+                                              },
+                              'bestaatwel2' => {
+                                                 'uid' => 'bestaatwel2',
+                                                 'cn' => 'bestaatwel2',
+                                                 'homeDirectory' => '/home/bestaatwel2',
+                                                 'uidNumber' => '5002',
+                                                 'objectClass' => 'posixAccount',
+                                                 'description' => 'ddddeesssccc',
+                                                 'gidNumber' => '5003',
+                                                 'gecos' => ',,,,',
+                                                 'userPassword' => '*',
+                                                 'loginShell' => '/home/dash'
+                                               }
+                            }
+               }, 'LdapData' );
