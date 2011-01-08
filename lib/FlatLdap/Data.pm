@@ -3,6 +3,7 @@ package FlatLdap::Data;
 use strict;
 use warnings;
 use Data::Dumper;
+use FlatLdap::Config;
 
 my $singleton;
 
@@ -17,11 +18,12 @@ sub new {
 sub readFiles
 {
 	my $self = shift;
+	my $config = new FlatLdap::Config();
 	
 	$self->{users} = {};
 	$self->{groups} = {};
 
-	open(my $fh, '<', './passwd')
+	open(my $fh, '<', $config->{etc}.'/passwd')
 		or die($!);
 
 	while(<$fh>) {
@@ -44,10 +46,10 @@ sub readFiles
 	}
 	close($fh);
 
-	open(FH, './shadow')
+	open($fh, $config->{etc}.'/shadow')
 		or die($!);
 
-	while(<FH>) {
+	while(<$fh>) {
 		chomp;
 		my @row = split(':');
 		my $uid = $row[0];
@@ -66,10 +68,10 @@ sub readFiles
 		$obj->{'shadowFlag'} = $row[8];
 		$obj->{'objectClass'} = 'shadowAccount';
 	}
-	close FH;
+	close $fh;
 
 
-	open($fh, '<', './group')
+	open($fh, '<', $config->{etc}.'/group')
 		or die($!);
 
 	while(<$fh>) {
