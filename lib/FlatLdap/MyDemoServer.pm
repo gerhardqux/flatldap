@@ -15,7 +15,7 @@ use constant RESULT_INVALID => {
 	'matchedDN' => '',
 	'errorMessage' => 'Invalid request',
 	'resultCode' => LDAP_UNWILLING_TO_PERFORM,
-}
+};
 
 use constant RESULT_OK => {
 	'matchedDN' => '',
@@ -27,7 +27,7 @@ use constant RESULT_OK => {
 sub new {
 	my ($class, $sock) = @_;
 	my $self = $class->SUPER::new($sock);
-	warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
+	#warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
 
 	# TODO singleton maken
 	$ldapdata = new FlatLdap::LdapData();
@@ -66,8 +66,8 @@ sub search {
 	my $self = shift;
 	my $reqData = shift;
 
-	warn "Searching...\n";
-	warn Dumper($reqData);
+	#warn "Searching...\n";
+	#warn Dumper($reqData);
 
 	my $base = $reqData->{'baseObject'};
 	
@@ -110,10 +110,10 @@ sub search {
 		err("Illegal objectClass: $objectClass") if defined $objectClass && $objectClass !~ m/^[a-z0-9]+$/i;
 		err("Illegal attributeDesc: $attributeDesc") if defined $attributeDesc && $attributeDesc !~ m/^[a-z0-9]+$/i;
 
-		warn "DEBUG: ObjectClass=$objectClass uid=$uid\n";
+		#warn "DEBUG: ObjectClass=$objectClass uid=$uid\n";
 
 		if ($objectClass eq 'posixAccount') {
-			if ($attributeDesc eq 'uidNumber') {
+			if (defined $attributeDesc && $attributeDesc eq 'uidNumber') {
 				push @entries, getPosixAccountByUidNumber($base, $uid);
 			}
 			else {
@@ -176,8 +176,8 @@ sub search {
 		# base
 	}
 
-	warn "Returning\n";
-	warn Dumper(@entries);
+	#warn "Returning:\n";
+	#warn Dumper(\@entries);
 	return RESULT_OK, @entries;
 }
 

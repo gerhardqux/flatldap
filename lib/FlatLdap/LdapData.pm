@@ -51,7 +51,9 @@ sub readFiles
 		chomp;
 		my @row = split(':');
 		my $uid = $row[0];
-		#if (exists $self->{users}->[$uid]);
+
+		die "Shadow user $uid not found in passwd\n" unless exists $self->{users}->{$uid};
+
 		my $obj = @{$self->{users}}{$uid};
 
 		$obj->{'userPassword'} = $row[1];
@@ -86,8 +88,6 @@ sub readFiles
 
 	}
 	close($fh);
-
-warn Dumper($self);
 }
 
 1;
