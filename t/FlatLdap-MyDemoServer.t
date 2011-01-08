@@ -9,6 +9,11 @@ use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use lib 't/lib';
 use Fake::RunningInetSocket;
 use FlatLdap::Server;
+use FlatLdap::Config;
+
+my $config = new FlatLdap::Config;
+
+$config->{etc} = 't/etc';
 
 my $sock = new Fake::RunningInetSocket;
 

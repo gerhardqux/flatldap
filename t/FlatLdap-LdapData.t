@@ -3,6 +3,11 @@
 use Test::Simple tests => 9;
 
 use FlatLdap::Data;
+use FlatLdap::Config;
+
+my $config = new FlatLdap::Config;
+
+$config->{etc} = 't/etc';
 
 my $ldapdata = new FlatLdap::Data();
 
