@@ -1,9 +1,9 @@
-package FlatLdap::MyDemoServer;
+package FlatLdap::Server;
 
 use strict;
 use warnings;
 use Data::Dumper;
-use FlatLdap::LdapData;
+use FlatLdap::Data;
 
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use Net::LDAP::Server;
@@ -29,8 +29,7 @@ sub new {
 	my $self = $class->SUPER::new($sock);
 	#warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
 
-	# TODO singleton maken
-	$ldapdata = new FlatLdap::LdapData();
+	$ldapdata = new FlatLdap::Data();
 
 	return $self;
 }

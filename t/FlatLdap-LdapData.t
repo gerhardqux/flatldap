@@ -2,9 +2,9 @@
 
 use Test::Simple tests => 9;
 
-use FlatLdap::LdapData;
+use FlatLdap::Data;
 
-my $ldapdata = new FlatLdap::LdapData();
+my $ldapdata = new FlatLdap::Data();
 
 ok(defined $ldapdata->{users},  'users are defined');
 ok(!defined $ldapdata->{users}->{bestaatniet}, '  bestaatniet is !defined');

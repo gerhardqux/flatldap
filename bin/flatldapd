@@ -8,7 +8,7 @@ use IO::Socket;
 use Pod::Usage;
 use Getopt::Long 2.33; 
 
-use FlatLdap::MyDemoServer;
+use FlatLdap::Server;
 
 use vars qw( $VERSION );
 
@@ -57,7 +57,7 @@ while (my @ready = $sel->can_read) {
 			# let's create a new socket
 			my $psock = $sock->accept;
 			$sel->add($psock);
-			$Handlers{*$psock} = FlatLdap::MyDemoServer->new($psock);
+			$Handlers{*$psock} = FlatLdap::Server->new($psock);
 		} else {
 			my $result = $Handlers{*$fh}->handle;
 			if ($result) {

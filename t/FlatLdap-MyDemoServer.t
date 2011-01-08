@@ -8,11 +8,11 @@ use Test::Simple tests => 10;
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use lib 't/lib';
 use Fake::RunningInetSocket;
-use FlatLdap::MyDemoServer;
+use FlatLdap::Server;
 
 my $sock = new Fake::RunningInetSocket;
 
-my $server = new FlatLdap::MyDemoServer($sock);
+my $server = new FlatLdap::Server($sock);
 
 my $result = $server->bind( { authentication => { simple => '123root' } } );
 ok($result->{resultCode} == LDAP_SUCCESS, "bind succeeded");

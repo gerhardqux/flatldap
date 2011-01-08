@@ -1,4 +1,4 @@
-package FlatLdap::LdapData;
+package FlatLdap::Data;
 
 use strict;
 use warnings;
