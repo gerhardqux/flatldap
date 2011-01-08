@@ -5,7 +5,8 @@ use warnings;
 
 use IO::Select;
 use IO::Socket;
-use MyDemoServer;
+
+use FlatLdap::MyDemoServer;
 
 my $sock = IO::Socket::INET->new(
 	Listen => 5,
@@ -23,7 +24,7 @@ while (my @ready = $sel->can_read) {
 			# let's create a new socket
 			my $psock = $sock->accept;
 			$sel->add($psock);
-			$Handlers{*$psock} = MyDemoServer->new($psock);
+			$Handlers{*$psock} = FlatLdap::MyDemoServer->new($psock);
 		} else {
 			my $result = $Handlers{*$fh}->handle;
 			if ($result) {

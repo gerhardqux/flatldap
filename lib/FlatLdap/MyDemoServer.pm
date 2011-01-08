@@ -1,21 +1,26 @@
-package MyDemoServer;
+package FlatLdap::MyDemoServer;
 
 use strict;
 use warnings;
 use Data::Dumper;
-use LdapData;
+use FlatLdap::LdapData;
 
-use lib '../lib';
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use Net::LDAP::Server;
 use base 'Net::LDAP::Server';
 use fields qw();
 use vars qw( $ldapdata );
 
+use constant RESULT_INVALID => {
+	'matchedDN' => '',
+	'errorMessage' => 'Invalid request',
+	'resultCode' => LDAP_UNWILLING_TO_PERFORM,
+}
+
 use constant RESULT_OK => {
 	'matchedDN' => '',
 	'errorMessage' => '',
-	'resultCode' => LDAP_SUCCESS
+	'resultCode' => LDAP_SUCCESS,
 };
 
 # constructor
@@ -25,9 +30,18 @@ sub new {
 	warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
 
 	# TODO singleton maken
-	$ldapdata = new LdapData();
+	$ldapdata = new FlatLdap::LdapData();
 
 	return $self;
+}
+
+sub err {
+	warn $_[0]."\n";
+	return {
+		'matchedDN' => '',
+		'errorMessage' => 'Invalid request',
+		'resultCode' => LDAP_UNWILLING_TO_PERFORM,
+	}
 }
 
 # the bind operation
@@ -35,7 +49,7 @@ sub bind {
 	my $self = shift;
 
 	my $reqData = shift;
-        unless ($reqData->{authentication}->{simple} eq '123root') {
+        unless (1 || $reqData->{authentication}->{simple} eq '123root') {
 		warn "Invalid credentials\n";
 		warn Dumper($reqData);
 		return {
@@ -51,8 +65,10 @@ sub bind {
 sub search {
 	my $self = shift;
 	my $reqData = shift;
-	print "Searching...\n";
-	print Dumper($reqData);
+
+	warn "Searching...\n";
+	warn Dumper($reqData);
+
 	my $base = $reqData->{'baseObject'};
 	
 	# plain die if dn contains 'dying'
@@ -86,10 +102,13 @@ sub search {
 
 		}
 		elsif ($reqData->{filter}->{equalityMatch}) {
-
-				$uid = $reqData->{filter}->{'and'}->{'or'}->[1]->{equalityMatch}->{assertionValue};
+			#	$uid = $reqData->{filter}->{'and'}->{'or'}->[1]->{equalityMatch}->{assertionValue};
 			$objectClass = $reqData->{filter}->{equalityMatch}->{assertionValue};
 		}
+
+		err("Illegal uid: $uid") if defined $uid && $uid !~ m/^[a-z0-9]+$/i;
+		err("Illegal objectClass: $objectClass") if defined $objectClass && $objectClass !~ m/^[a-z0-9]+$/i;
+		err("Illegal attributeDesc: $attributeDesc") if defined $attributeDesc && $attributeDesc !~ m/^[a-z0-9]+$/i;
 
 		warn "DEBUG: ObjectClass=$objectClass uid=$uid\n";
 
@@ -157,7 +176,8 @@ sub search {
 		# base
 	}
 
-	print Dumper(@entries);
+	warn "Returning\n";
+	warn Dumper(@entries);
 	return RESULT_OK, @entries;
 }
 
@@ -167,31 +187,6 @@ sub getPosixGroupsByUid
 	my $base = shift;
 	my $um = shift;
 
-	my %passwd;
-	open(my $fh, '<', './passwd')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$passwd{$row[0]} = [ @row ];
-	}
-	close($fh);
-
-	my %group;
-	open($fh, '<', './group')
-		or die($!);
-
-	while(<$fh>) {
-		chomp;
-		my @row = split(':');
-		$group{$row[0]} = [ @row ];
-	}
-	close($fh);
-
-	my @entries;
-
-	
 	return ();
 }
 

@@ -1,24 +1,25 @@
-package LdapData;
+package FlatLdap::LdapData;
 
 use strict;
 use warnings;
 use Data::Dumper;
 
+my $singleton;
+
 # constructor
 sub new {
 	my $class = shift;
-	my $self = bless {
-		users => {},
-		groups => {},
-	}, $class;
-	$self->readFiles();
-print Dumper($self);
-	return $self;
+	$singleton ||= bless {}, $class;
+	$singleton->readFiles() unless exists $singleton->{users};
+	return $singleton;
 }
 
 sub readFiles
 {
 	my $self = shift;
+	
+	$self->{users} = {};
+	$self->{groups} = {};
 
 	open(my $fh, '<', './passwd')
 		or die($!);
@@ -86,7 +87,7 @@ sub readFiles
 	}
 	close($fh);
 
-	my @entries;
+warn Dumper($self);
 }
 
 1;

@@ -1,9 +1,14 @@
 Flatldap
 ========
 
-  This does not work yet, this code only sets the basic idea.
-* OS setup
-gerhtest# cat /etc/libnss-ldap.conf 
+This does not work yet, this code only sets the basic idea.
+
+
+OS setup
+--------
+gerhtest# apt-get install libnss-ldap libpam-ldap
+
+gerhtest$ cat /etc/libnss-ldap.conf 
 host 127.0.0.1
 base dc=qrux,dc=nl
 ldap_version 3
@@ -12,6 +17,9 @@ port 1389
 
 gerhtest# cat /etc/libnss-ldap.secret 
 123root
+
+gerhtest# chown root.root $_
+gerhtest# chmod 700 $_
 
 gerhtest# cat /etc/nsswitch.conf 
 # /etc/nsswitch.conf
@@ -24,9 +32,7 @@ passwd:         files ldap
 group:          files
 shadow:         files
 
-#hosts:         files 
 hosts:          files dns
-#hosts:          files dns
 networks:       files
 
 protocols:      db files
@@ -36,10 +42,15 @@ rpc:            db files
 
 netgroup:       nis
 
-* Starting the server
-gerhtest# perl ./simple-server.pl &
 
-* Testing
+Starting the server
+-------------------
+gerhtest$ ./run
+
+
+Testing
+-------
+
 gerhtest# getent passwd
 
 gerhtest# id bestaatwel
