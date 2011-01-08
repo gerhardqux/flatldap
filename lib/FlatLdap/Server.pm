@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use FlatLdap::Data;
+use FlatLdap::Config;
 
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use Net::LDAP::Server;
@@ -27,7 +28,8 @@ use constant RESULT_OK => {
 sub new {
 	my ($class, $sock) = @_;
 	my $self = $class->SUPER::new($sock);
-	#warn sprintf("Accepted connection from: %s\n", $sock->peerhost());
+	my $config = new FlatLdap::Config();
+	warn sprintf("Accepted connection from: %s\n", $sock->peerhost()) if $config->{verbose};
 
 	$ldapdata = new FlatLdap::Data();
 
@@ -46,9 +48,10 @@ sub err {
 # the bind operation
 sub bind {
 	my $self = shift;
-
 	my $reqData = shift;
-        unless (1 || $reqData->{authentication}->{simple} eq '123root') {
+	my $config = new FlatLdap::Config();
+
+        unless ($config->{insecure} || $reqData->{authentication}->{simple} eq '123root') {
 		warn "Invalid credentials\n";
 		warn Dumper($reqData);
 		return {
@@ -65,8 +68,10 @@ sub search {
 	my $self = shift;
 	my $reqData = shift;
 
-	#warn "Searching...\n";
-	#warn Dumper($reqData);
+	my $config = new FlatLdap::Config();
+
+	warn "Searching...\n" if $config->{debug};
+	warn Dumper($reqData) if $config->{debug};
 
 	my $base = $reqData->{'baseObject'};
 	
@@ -175,8 +180,8 @@ sub search {
 		# base
 	}
 
-	#warn "Returning:\n";
-	#warn Dumper(\@entries);
+	warn "Returning:\n" if $config->{debug};
+	warn Dumper(\@entries) if $config->{debug};
 	return RESULT_OK, @entries;
 }
 

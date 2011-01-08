@@ -9,6 +9,7 @@ use Pod::Usage;
 use Getopt::Long 2.33; 
 
 use FlatLdap::Server;
+use FlatLdap::Config;
 
 use vars qw( $VERSION );
 
@@ -19,34 +20,27 @@ $ENV{PATH} = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 $ENV{SHELL} = '/bin/sh';
 delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 
-my %config = (
-	verbose => 0,
-	debug   => 0,
-	port    => 389,
-	listen  => "0.0.0.0",
-	chroot  => 1,
-	cfgfile => "/etc/flatldapd.conf",
-	etc     => "/etc",
-	fg      => 0,
-);
+my $config = new FlatLdap::Config;
 
 GetOptions(
-  "v|verbose+"    => \$config{verbose},    
-  "d|debug+"      => \$config{debug},    
-  "p|port+"       => \$config{port},    
-  "l|listen+"     => \$config{listen},    
-  "s|chroot+"     => \$config{chroot},    
-  "f|foreground+" => \$config{fg},    
-  "c|config+"     => \$config{cfgfile},    
-  "e|etc"         => \$config{etc}
+  "v|verbose+"    => \$config->{verbose},    
+  "d|debug+"      => \$config->{debug},    
+  "p|port=i"      => \$config->{port},    
+  "i|listen=s"    => \$config->{listen},    
+  "f|foreground"  => \$config->{fg},    
+  "c|config=s"    => \$config->{cfgfile},    
+  "e|etc=s"       => \$config->{etc},
+  "insecure"      => \$config->{insecure},
 ) or pod2usage( -verbose => 2 );
+
+warn "Start listening on $config->{listen}:$config->{port} for new ldap queries\n" if $config->{verbose};
 
 my $sock = IO::Socket::INET->new(
 	Listen => 5,
 	Proto => 'tcp',
 	Reuse => 1,
-	LocalAddr => '127.0.0.1',
-	LocalPort => 1389
+	LocalAddr => $config->{listen},
+	LocalPort => $config->{port},
 );
 
 my $sel = IO::Select->new($sock);
