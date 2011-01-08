@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use IO::Select;
+use IO::Socket;
+use Pod::Usage;
+use Getopt::Long 2.33; 
+
+use FlatLdap::MyDemoServer;
+
+use vars qw( $VERSION );
+
+$VERSION=v0.0.1;
+
+# do some security nailing
+$ENV{PATH} = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+$ENV{SHELL} = '/bin/sh';
+delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
+
+my %config = (
+	verbose => 0,
+	debug   => 0,
+	port    => 389,
+	listen  => "0.0.0.0",
+	chroot  => 1,
+	cfgfile => "/etc/flatldapd.conf",
+	etc     => "/etc",
+	fg      => 0,
+);
+
+GetOptions(
+  "v|verbose+"    => \$config{verbose},    
+  "d|debug+"      => \$config{debug},    
+  "p|port+"       => \$config{port},    
+  "l|listen+"     => \$config{listen},    
+  "s|chroot+"     => \$config{chroot},    
+  "f|foreground+" => \$config{fg},    
+  "c|config+"     => \$config{cfgfile},    
+  "e|etc"         => \$config{etc}
+) or pod2usage( -verbose => 2 );
+
+my $sock = IO::Socket::INET->new(
+	Listen => 5,
+	Proto => 'tcp',
+	Reuse => 1,
+	LocalAddr => '127.0.0.1',
+	LocalPort => 1389
+);
+
+my $sel = IO::Select->new($sock);
+my %Handlers;
+while (my @ready = $sel->can_read) {
+	foreach my $fh (@ready) {
+		if ($fh == $sock) {
+			# let's create a new socket
+			my $psock = $sock->accept;
+			$sel->add($psock);
+			$Handlers{*$psock} = FlatLdap::MyDemoServer->new($psock);
+		} else {
+			my $result = $Handlers{*$fh}->handle;
+			if ($result) {
+				# we have finished with the socket
+				$sel->remove($fh);
+				$fh->close;
+				delete $Handlers{*$fh};
+			}
+		}
+	}
+}
+
+
+__END__
+
+=head1 NAME
+
+flatldapd - Ldap server with /etc/passwd and /etc/group as backend
+
+=head1 SYNOPSIS
+
+flatldapd [-options]
+
+ Options:
+   -h           Display a small help
+   --man        Display the manpage
+   -v           Be verbose
+   -d           Show debugging output
+
+=head1 DESCRIPTION
+
+Read /etc/passwd, /etc/shadow and related files and start serving ldap-queries from
+systems who would like to use these files.
+
+=head1 EXAMPLE
+
+flatldapd -v
+
+=cut
+
