@@ -2,6 +2,7 @@ package FlatLdap::Server;
 
 use strict;
 use warnings;
+use feature "switch";
 use Data::Dumper;
 use FlatLdap::Data;
 use FlatLdap::Config;
@@ -46,6 +47,8 @@ sub err {
 }
 
 # the bind operation
+#
+# TODO only return shadow information when machine privileges are used
 sub bind {
 	my $self = shift;
 	my $reqData = shift;
@@ -145,35 +148,25 @@ sub search {
 			}
 		}
 		elsif ($objectClass eq 'posixGroup') {
-			if ($attributeDesc eq 'cn') {
-				push @entries, getPosixGroupsByCn($base, $uid);
-			}
-			elsif ($attributeDesc eq 'gidNumber') {
-				push @entries, getPosixGroupsByGidNumber($base, $uid);
-			}
-			elsif ($attributeDesc eq 'memberUid') {
-				push @entries, getPosixGroupsByMemberUid($base, $uid);
-			}
-			elsif ($attributeDesc eq 'uniqueMember') {
-				push @entries, getPosixGroupsByUniqueMember($base, $uid);
-			}
-			elsif ($attributeDesc eq 'uid') {
-				push @entries, getPosixGroupsByUid($base, $uid);
-			}
-			elsif ($attributeDesc eq 'uid') {
-				# getPosixGroupsByUid
-				my @posixGroups = getPosixGroups($uid);
+			given ($attributeDesc) { 
+				when ('cn')           { push @entries, getPosixGroupsByCn($base, $uid); }
+				when ('gidNumber')    { push @entries, getPosixGroupsByGidNumber($base, $uid); }
+				when ('memberUid')    { push @entries, getPosixGroupsByMemberUid($base, $uid); }
+				when ('uniqueMember') { push @entries, getPosixGroupsByUniqueMember($base, $uid); }
+				when ('uid')          { push @entries, getPosixGroupsByUid($base, $uid); }
+				when ('uid') {
+					# getPosixGroupsByUid
+					my @posixGroups = getPosixGroups($uid);
 
-				foreach my $posixGroup (@posixGroups) {
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn($posixGroup->{dn});
+					foreach my $posixGroup (@posixGroups) {
+						my $entry = Net::LDAP::Entry->new;
+						$entry->dn($posixGroup->{dn});
 
-					$entry->add(%{$posixGroup});
-					push @entries, $entry;
+						$entry->add(%{$posixGroup});
+						push @entries, $entry;
+					}
 				}
-			}
-			else {
-				push @entries, getAllPosixGroups($base);
+				default { push @entries, getAllPosixGroups($base); }
 			}
 		}
 	} else {
@@ -340,8 +333,8 @@ sub getAllPosixGroups
 	foreach my $obj (values %{$ldapdata->{groups}}) {
 
 		my $posixGroup = {
-			'dn'           => "cn=".$obj->{gid}.", ou=Groups, $base",
-			'cn'           => $obj->{gid},
+			'dn'           => "cn=".$obj->{cn}.", ou=Groups, $base",
+			'cn'           => $obj->{cn},
 			'userPassword' => $obj->{userPassword},
 			'gidNumber'    => $obj->{gidNumber},
 			'memberUid'    => $obj->{memberUid},

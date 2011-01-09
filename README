@@ -29,7 +29,7 @@ gerhtest# cat /etc/nsswitch.conf
 # `info libc "Name Service Switch"' for information about this file.
 
 passwd:         files ldap
-group:          files
+group:          files ldap
 shadow:         files
 
 hosts:          files dns
@@ -56,3 +56,4 @@ gerhtest# getent passwd
 gerhtest# id bestaatwel
 uid=5001(bestaatwel) gid=5001 groups=5001
 
+gerhtest# getent group
