@@ -6,7 +6,7 @@ This does not work yet, this code only sets the basic idea.
 
 OS setup
 --------
-gerhtest# apt-get install libnss-ldap libpam-ldap
+gerhtest# apt-get install libnss-ldap libpam-ldap libnet-ldap-perl libnet-ldap-server-perl
 
 gerhtest$ cat /etc/libnss-ldap.conf 
 host 127.0.0.1
