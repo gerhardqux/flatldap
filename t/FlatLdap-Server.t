@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::Simple tests => 20;
+use Test::Simple tests => 17;
 
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use lib 't/lib';
@@ -64,46 +64,50 @@ ok($result[2]->{asn}->{objectName} eq 'cn=bestaatwel2, ou=Users, dc=qrux,dc=nl',
  "  objectName 'bestaatwel2' correct");
 
 @result = $server->search( {
-          'timeLimit' => 0,    
+          'timeLimit' => 0,
           'baseObject' => 'dc=qrux,dc=nl',
-          'filter' => {        
+          'filter' => {
                         'and' => [
                                    {
                                      'equalityMatch' => {
-                                                          'assertionValue' => 'posixGroup',
+                                                          'assertionValue' => 'posixAccount',
                                                           'attributeDesc' => 'objectClass'
-                                                        }
+                                                        } 
+                                   },
+                                   {
+                                     'equalityMatch' => {
+                                                          'assertionValue' => '5001',
+                                                          'attributeDesc' => 'uidNumber'
+                                                        } 
                                    }
                                  ] 
-                      },       
-          'sizeLimit' => 0,    
-          'typesOnly' => 0,    
-          'derefAliases' => 0, 
-          'attributes' => [    
-                            'cn',
+                      },
+          'sizeLimit' => 1,
+          'sizeLimit' => 1,
+          'typesOnly' => 0,
+          'derefAliases' => 0,
+          'attributes' => [
+                            'uid',
                             'userPassword',
-                            'memberUid',
-                            'uniqueMember',
-                            'gidNumber'
-                          ],   
-          'scope' => 2         
-        }                     
-);
-
+                            'uidNumber',
+                            'gidNumber',
+                            'cn',  
+                            'homeDirectory',
+                            'loginShell',
+                            'gecos',
+                            'description',
+                            'objectClass'
+                          ],
+          'scope' => 2
+});
 
 ok(defined $result[1], "result[1] exists");
 ok(exists $result[1]->{attrs}, "result[1]->{attrs} exists");
 ok(exists $result[1]->{attrs}->{cn}, "result[1]->{attrs}->{cn} exists");
 
-ok($result[1]->{attrs}->{cn}->[0] eq 'bestaatwelgr', "group 'bestaatwelgr' found");
-ok($result[1]->{attrs}->{gidnumber}->[0] eq '5001', "  group 'bestaatwelgr' has gidNumber 5001");
-ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwelgr, ou=Groups, dc=qrux,dc=nl',
- "  objectName 'bestaatwelgr' correct");
+ok($result[1]->{attrs}->{uid}->[0] eq 'bestaatwel', "user 'bestaatwel' found");
+ok($result[1]->{attrs}->{uidnumber}->[0] eq '5001', "  user 'bestaatwel' has uidNumber 5001");
+ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwel, ou=Users, dc=qrux,dc=nl',
+ "  objectName 'bestaatwel' correct");
 
-ok($result[2]->{attrs}->{cn}->[0] eq 'hackersgr', "group 'hackersgr' found");
-ok($result[2]->{attrs}->{gidnumber}->[0] eq '5000', "  group 'hackersgr' has gidNumber 5000");
-ok($result[2]->{attrs}->{memberuid}->[0] eq 'bestaatwel2', "  group 'hackersgr' has gidNumber 5000");
-ok($result[2]->{asn}->{objectName} eq 'cn=hackersgr, ou=Groups, dc=qrux,dc=nl',
- "  objectName 'bestaatwelgr' correct");
-
-
+ok(!defined $result[2], "result[2] !exists");

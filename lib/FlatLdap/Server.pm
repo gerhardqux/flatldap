@@ -117,7 +117,7 @@ sub search {
 		err("Illegal objectClass: $objectClass") if defined $objectClass && $objectClass !~ m/^[a-z0-9]+$/i;
 		err("Illegal attributeDesc: $attributeDesc") if defined $attributeDesc && $attributeDesc !~ m/^[a-z0-9]+$/i;
 
-		#warn "DEBUG: ObjectClass=$objectClass uid=$uid\n";
+		#warn "DEBUG: ObjectClass=$objectClass uid=$uid attr=$attributeDesc\n";
 
 		if ($objectClass eq 'posixAccount') {
 			if (defined $attributeDesc && $attributeDesc eq 'uidNumber') {
@@ -271,8 +271,8 @@ sub getPosixGroupsByGidNumber
 		next unless $obj->{gidNumber} == $gidNumber;
 
 		my $posixGroup = {
-			'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
-			'cn' => $obj->{gid},
+			'dn' => "cn=".$obj->{cn}.", ou=Groups, $base",
+			'cn' => $obj->{cn},
 			'userPassword' => $obj->{userPassword},
 			'gidNumber' => $obj->{gidNumber},
 			'memberUid' => $obj->{memberUid},
