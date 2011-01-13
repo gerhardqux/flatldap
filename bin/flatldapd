@@ -7,6 +7,10 @@ use IO::Select;
 use IO::Socket;
 use Pod::Usage;
 use Getopt::Long 2.33; 
+use POSIX qw(setsid setuid setgid);
+
+# Lazy loading doesn't work when chrooting
+use Hash::Util;
 
 use FlatLdap::Server;
 use FlatLdap::Config;
@@ -44,6 +48,38 @@ my $sock = IO::Socket::INET->new(
 );
 
 my $sel = IO::Select->new($sock);
+
+# Read files before chrooting
+my $ldapdata = new FlatLdap::Data();
+
+chdir("/");
+
+if ($> == 0 && !$config->{insecure}) {
+
+	my $uid = (getpwnam($config->{user}))[2]
+		or die("User ".$config->{user}." not found\n");
+	my $gid = (getgrnam($config->{group}))[2]
+		or die("Group ".$config->{group}." not found\n");
+
+	chroot($config->{chrootdir})
+		or die("Chroot to ".$config->{chrootdir}." failed");	
+
+	POSIX::setgid( $gid )
+		or die("Failed to setgid\n");
+	POSIX::setuid( $uid )
+		or die("Failed to setuid\n");
+}
+
+if ($config->{fg}) {
+	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+	open STDOUT, '>/dev/null' or die "Can't write to /dev/null: $!";
+
+	defined(my $pid = fork) or die "Can't fork: $!";
+	exit(0) if $pid;
+	setsid or die "Can't start a new session: $!";
+	open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
+}
+
 my %Handlers;
 while (my @ready = $sel->can_read) {
 	foreach my $fh (@ready) {

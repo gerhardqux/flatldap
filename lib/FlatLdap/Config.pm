@@ -13,6 +13,9 @@ my $config = {
         etc      => "/etc",
         fg       => 0,
         insecure => 0,
+	user     => 'nobody',
+	group    => 'nogroup',
+	chrootdir => '/var/empty',
 };
 
 sub new {
