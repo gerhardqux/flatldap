@@ -54,13 +54,21 @@ my $ldapdata = new FlatLdap::Data();
 
 chdir("/");
 
+my ($uid, $gid);
 if ($> == 0 && !$config->{insecure}) {
 
-	my $uid = (getpwnam($config->{user}))[2]
+	$uid = (getpwnam($config->{user}))[2]
 		or die("User ".$config->{user}." not found\n");
-	my $gid = (getgrnam($config->{group}))[2]
+	$gid = (getgrnam($config->{group}))[2]
 		or die("Group ".$config->{group}." not found\n");
+}
 
+unless ($config->{fg}) {
+	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+	open STDOUT, '>/dev/null' or die "Can't write to /dev/null: $!";
+}
+
+if ($> == 0 && !$config->{insecure}) {
 	chroot($config->{chrootdir})
 		or die("Chroot to ".$config->{chrootdir}." failed");	
 
@@ -70,10 +78,7 @@ if ($> == 0 && !$config->{insecure}) {
 		or die("Failed to setuid\n");
 }
 
-if ($config->{fg}) {
-	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-	open STDOUT, '>/dev/null' or die "Can't write to /dev/null: $!";
-
+unless ($config->{fg}) {
 	defined(my $pid = fork) or die "Can't fork: $!";
 	exit(0) if $pid;
 	setsid or die "Can't start a new session: $!";
