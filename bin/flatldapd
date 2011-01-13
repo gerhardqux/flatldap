@@ -64,6 +64,7 @@ if ($> == 0 && !$config->{insecure}) {
 }
 
 unless ($config->{fg}) {
+	warn "daemonizing...\n" if $config->{verbose};
 	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
 	open STDOUT, '>/dev/null' or die "Can't write to /dev/null: $!";
 }
