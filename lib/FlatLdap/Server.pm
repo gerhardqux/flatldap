@@ -113,9 +113,9 @@ sub search {
 			$objectClass = $reqData->{filter}->{equalityMatch}->{assertionValue};
 		}
 
-		err("Illegal uid: $uid") if defined $uid && $uid !~ m/^[a-z0-9]+$/i;
-		err("Illegal objectClass: $objectClass") if defined $objectClass && $objectClass !~ m/^[a-z0-9]+$/i;
-		err("Illegal attributeDesc: $attributeDesc") if defined $attributeDesc && $attributeDesc !~ m/^[a-z0-9]+$/i;
+		return err("Illegal uid: $uid") if defined $uid && $uid !~ m/^[a-z0-9]+$/i;
+		return err("Illegal objectClass: $objectClass") if defined $objectClass && $objectClass !~ m/^[a-z0-9]+$/i;
+		return err("Illegal attributeDesc: $attributeDesc") if defined $attributeDesc && $attributeDesc !~ m/^[a-z0-9]+$/i;
 
 		#warn "DEBUG: ObjectClass=$objectClass uid=$uid attr=$attributeDesc\n";
 
@@ -184,7 +184,7 @@ sub getPosixGroupsByUid
 	my $base = shift;
 	my $um = shift;
 
-	return ();
+	return;
 }
 
 
@@ -288,7 +288,7 @@ sub getPosixGroupsByGidNumber
 
 		return @entries;
 	}
-	return ();
+	return;
 }
 
 sub getPosixGroupsByCn
@@ -300,7 +300,7 @@ sub getPosixGroupsByCn
 
 	if ($cn) {
 		my $obj = $ldapdata->{groups}->{cn}
-			or return ();
+			or return;
 
 		my $posixGroup = {
 			'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
@@ -321,7 +321,7 @@ sub getPosixGroupsByCn
 		return @entries;
 	}
 
-	return ();
+	return;
 }
 
 sub getAllPosixGroups
@@ -401,7 +401,7 @@ sub getPosixAccountByUidNumber
 
 		return @entries;
 	}
-	return ();
+	return;
 }
 
 
@@ -412,7 +412,7 @@ sub getPosixAccounts
 
 	if ($uid) {
 		my $obj = $ldapdata->{users}->{$uid}
-			or return ();
+			or return;
 
 		my $dn = "cn=".$uid.", ou=Users, $base";
 	
