@@ -6,12 +6,13 @@ use feature "switch";
 use Data::Dumper;
 use FlatLdap::Data;
 use FlatLdap::Config;
+use FlatLdap::Schema;
 
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use Net::LDAP::Server;
 use base 'Net::LDAP::Server';
 use fields qw();
-use vars qw( $ldapdata );
+use vars qw( $ldapdata $schema );
 
 use constant RESULT_INVALID => {
 	'matchedDN' => '',
@@ -33,6 +34,7 @@ sub new {
 	warn sprintf("Accepted connection from: %s\n", $sock->peerhost()) if $config->{verbose};
 
 	$ldapdata = new FlatLdap::Data();
+	$schema = new FlatLdap::Schema();
 
 	return $self;
 }
@@ -203,21 +205,7 @@ sub getPosixGroupsByMemberUid
 
 		for my $obj (values %{$ldapdata->{groups}}) {
 			if ($obj->{gid} == $gidn) {
-				my $posixGroup = {
-					'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
-					'cn' => $obj->{gid},
-					'userPassword' => $obj->{userPassword},
-					'gidNumber' => $obj->{gidNumber},
-					'memberUid' => $obj->{memberUid},
-					'uniqueMember' => '',
-					'objectClass' => 'posixGroup',
-				};
-
-				my $entry = Net::LDAP::Entry->new;
-				$entry->dn($posixGroup->{dn});
-
-				$entry->add(%{$posixGroup});
-				push @entries, $entry;
+				push @entries, buildEntry($base, $obj);
 			}
 		}
 	}
@@ -228,21 +216,7 @@ sub getPosixGroupsByMemberUid
 		my @members = ();
 	 	for my $member (@members) {
 			if ($member eq $memberuid) {
-				my $posixGroup = {
-					'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
-					'cn' => $obj->{gid},
-					'userPassword' => $obj->{userPassword},
-					'gidNumber' => $obj->{gidNumber},
-					'memberUid' => $obj->{memberUid},
-					'uniqueMember' => '',
-					'objectClass' => 'posixGroup',
-				};
-
-				my $entry = Net::LDAP::Entry->new;
-				$entry->dn($posixGroup->{dn});
-
-				$entry->add(%{$posixGroup});
-				push @entries, $entry;
+				push @entries, buildEntry($base, $obj);
 			}
 		}
 	}
@@ -259,6 +233,29 @@ sub getPosixGroupsByUniqueMember
 	my $um = shift;
 }
 
+sub buildEntry
+{
+	my ($base, $obj, $objectClass) = @_;
+	 
+	my $ou = 'Uncategorized';
+
+	$ou = 'Groups' if $objectClass eq 'posixGroup';
+	$ou = 'Users'  if $objectClass eq 'posixAccount';
+	$ou = 'Users'  if $objectClass eq 'shadowAccount';
+
+	my %entryHash = map {
+		$_ => $obj->{$_}
+	} @{$schema->{$objectClass}};
+
+	$entryHash{dn} = "cn=".$obj->{cn}.", ou=$ou, $base";
+	$entryHash{objectClass} = $objectClass;
+
+	my $entry = Net::LDAP::Entry->new;
+	$entry->dn($entryHash{dn});
+
+	$entry->add(%entryHash);
+	return $entry;
+}
 
 sub getPosixGroupsByGidNumber
 {
@@ -270,21 +267,7 @@ sub getPosixGroupsByGidNumber
 	foreach my $obj (values %{$ldapdata->{groups}}) {
 		next unless $obj->{gidNumber} == $gidNumber;
 
-		my $posixGroup = {
-			'dn' => "cn=".$obj->{cn}.", ou=Groups, $base",
-			'cn' => $obj->{cn},
-			'userPassword' => $obj->{userPassword},
-			'gidNumber' => $obj->{gidNumber},
-			'memberUid' => $obj->{memberUid},
-			'uniqueMember' => '',
-			'objectClass' => 'posixGroup',
-		};
-
-		my $entry = Net::LDAP::Entry->new;
-		$entry->dn($posixGroup->{dn});
-
-		$entry->add(%{$posixGroup});
-		push @entries, $entry;
+		push(@entries, buildEntry($base, $obj, 'posixGroup'));
 
 		return @entries;
 	}
@@ -302,21 +285,7 @@ sub getPosixGroupsByCn
 		my $obj = $ldapdata->{groups}->{cn}
 			or return;
 
-		my $posixGroup = {
-			'dn' => "cn=".$obj->{gid}.", ou=Groups, $base",
-			'cn' => $obj->{gid},
-			'userPassword' => $obj->{userPassword},
-			'gidNumber' => $obj->{gidNumber},
-			'memberUid' => $obj->{memberUid},
-			'uniqueMember' => '',
-			'objectClass' => 'posixGroup',
-		};
-
-		my $entry = Net::LDAP::Entry->new;
-		$entry->dn($posixGroup->{dn});
-
-		$entry->add(%{$posixGroup});
-		push @entries, $entry;
+		push @entries, buildEntry($base, $obj, 'posixGroup');
 
 		return @entries;
 	}
@@ -331,23 +300,9 @@ sub getAllPosixGroups
 	my @entries;
 
 	foreach my $obj (values %{$ldapdata->{groups}}) {
-
-		my $posixGroup = {
-			'dn'           => "cn=".$obj->{cn}.", ou=Groups, $base",
-			'cn'           => $obj->{cn},
-			'userPassword' => $obj->{userPassword},
-			'gidNumber'    => $obj->{gidNumber},
-			'memberUid'    => $obj->{memberUid},
-			'uniqueMember' => '',
-			'objectClass'  => 'posixGroup',
-		};
-
-		my $entry = Net::LDAP::Entry->new;
-		$entry->dn($posixGroup->{dn});
-
-		$entry->add(%{$posixGroup});
-		push @entries, $entry;
+		push @entries, buildEntry($base, $obj, 'posixGroup');
 	}
+
 	return @entries;
 }
 
@@ -379,25 +334,7 @@ sub getPosixAccountByUidNumber
 	for my $obj (values %{$ldapdata->{users}}) {
 		next unless $obj->{uidNumber} == $uidNumber;
 
-		my $posixAccount = {
-			'dn'            => "cn=".$obj->{uid}.", ou=Users, $base",
-			'uid'           => $obj->{uid},
-			'userPassword'  => $obj->{userPassword},
-			'uidNumber'     => $obj->{uidNumber},
-			'gidNumber'     => $obj->{gidNumber},
-			'cn'            => $obj->{uid},
-			'homeDirectory' => $obj->{homeDirectory},
-			'loginShell'    => $obj->{loginShell},
-			'gecos'         => $obj->{gecos},
-			'description'   => 'ddddeesssccc',
-			'objectClass'   => 'posixAccount',
-		};
-
-		my $entry = Net::LDAP::Entry->new;
-		$entry->dn($posixAccount->{dn});
-
-		$entry->add(%{$posixAccount});
-		push @entries, $entry;
+		push @entries, buildEntry($base, $obj, 'posixAccount');
 
 		return @entries;
 	}
