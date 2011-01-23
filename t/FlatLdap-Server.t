@@ -55,12 +55,12 @@ ok(exists $result[1]->{attrs}->{uid}, "result[1]->{attrs}->{uid} exists");
 
 ok($result[1]->{attrs}->{uid}->[0] eq 'bestaatwel', "user 'bestaatwel' found");
 ok($result[1]->{attrs}->{uidnumber}->[0] eq '5001', "  user 'bestaatwel' has uidNumber 5001");
-ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwel, ou=Users, dc=qrux,dc=nl',
+ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwel, ou=Users, dc=qrux, dc=nl',
  "  objectName 'bestaatwel' correct");
 
 ok($result[2]->{attrs}->{uid}->[0] eq 'bestaatwel2', "user 'bestaatwel2' found");
 ok($result[2]->{attrs}->{uidnumber}->[0] == 5002, "  user 'bestaatwel2' has uidNumber 5002");
-ok($result[2]->{asn}->{objectName} eq 'cn=bestaatwel2, ou=Users, dc=qrux,dc=nl',
+ok($result[2]->{asn}->{objectName} eq 'cn=bestaatwel2, ou=Users, dc=qrux, dc=nl',
  "  objectName 'bestaatwel2' correct");
 
 @result = $server->search( {
@@ -107,7 +107,7 @@ ok(exists $result[1]->{attrs}->{cn}, "result[1]->{attrs}->{cn} exists");
 
 ok($result[1]->{attrs}->{uid}->[0] eq 'bestaatwel', "user 'bestaatwel' found");
 ok($result[1]->{attrs}->{uidnumber}->[0] eq '5001', "  user 'bestaatwel' has uidNumber 5001");
-ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwel, ou=Users, dc=qrux,dc=nl',
+ok($result[1]->{asn}->{objectName} eq 'cn=bestaatwel, ou=Users, dc=qrux, dc=nl',
  "  objectName 'bestaatwel' correct");
 
 ok(!defined $result[2], "result[2] !exists");

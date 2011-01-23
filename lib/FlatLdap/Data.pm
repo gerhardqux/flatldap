@@ -83,15 +83,31 @@ sub readFiles
 		$self->{groups}->{$gid} = {};
 		my $obj = $self->{groups}->{$gid};
 
+		$row[3] ||= '';
 		$obj->{cn} = $row[0];
 		$obj->{userPassword} = $row[1];
 		$obj->{gidNumber} = $row[2];
-		$obj->{memberUid} = $row[3];
+		$obj->{memberUid} = [split(/,/, $row[3]) ] ;
 		$obj->{uniqueMember} = '';
 		$obj->{objectClass} = 'posixGroup';
-
 	}
 	close($fh);
+
+
+	for my $user (values %{$self->{users}} ) {
+		for my $group (values %{$self->{groups}} ) {
+			next if $group->{gidNumber} ne $user->{gidNumber};
+			push @{$group->{memberUid}}, $user->{cn};
+		}
+	}
+
+	for my $group (values %{$self->{groups}} ) {
+		$group->{uniqueMember} = [];
+
+		for (@{$group->{memberUid}}) {
+			push @{$group->{uniqueMember}}, "$_, ou=Users, ".$config->{base};
+		}
+	}
 }
 
 1;

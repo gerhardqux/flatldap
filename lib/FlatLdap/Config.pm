@@ -6,6 +6,7 @@ use warnings;
 my $config = {
         verbose  => 0,
         debug    => 0,
+        base     => 'dc=qrux, dc=nl',
         port     => 389,
         listen   => "0.0.0.0",
         chroot   => 1,

@@ -2,27 +2,53 @@ $VAR1 = bless( {
                  'groups' => {
                                'bestaatwelgr' => {
                                                    'gidNumber' => '5001',
-                                                   'uniqueMember' => '',
+                                                   'uniqueMember' => [
+                                                                       'bestaatwel, ou=Users, dc=qrux, dc=nl'
+                                                                     ],
                                                    'cn' => 'bestaatwelgr',
                                                    'userPassword' => 'x',
                                                    'objectClass' => 'posixGroup',
-                                                   'memberUid' => undef
+                                                   'memberUid' => [
+                                                                    'bestaatwel'
+                                                                  ]
                                                  },
                                'hackersgr' => {
                                                 'gidNumber' => '5000',
-                                                'uniqueMember' => '',
+                                                'uniqueMember' => [
+                                                                    'bestaatwel2, ou=Users, dc=qrux, dc=nl',
+                                                                    'bestaatwel3, ou=Users, dc=qrux, dc=nl'
+                                                                  ],
                                                 'cn' => 'hackersgr',
                                                 'userPassword' => 'x',
                                                 'objectClass' => 'posixGroup',
-                                                'memberUid' => 'bestaatwel2'
+                                                'memberUid' => [
+                                                                 'bestaatwel2',
+                                                                 'bestaatwel3'
+                                                               ]
                                               },
                                'bestaatwel2gr' => {
                                                     'gidNumber' => '5003',
-                                                    'uniqueMember' => '',
+                                                    'uniqueMember' => [
+                                                                        'bestaatwel2, ou=Users, dc=qrux, dc=nl'
+                                                                      ],
                                                     'cn' => 'bestaatwel2gr',
                                                     'userPassword' => 'x',
                                                     'objectClass' => 'posixGroup',
-                                                    'memberUid' => undef
+                                                    'memberUid' => [
+                                                                     'bestaatwel2'
+                                                                   ]
+                                                  },
+                               'bestaatwel3gr' => {
+                                                    'gidNumber' => '5004',
+                                                    'uniqueMember' => [
+                                                                        'bestaatwel3, ou=Users, dc=qrux, dc=nl'
+                                                                      ],
+                                                    'cn' => 'bestaatwel3gr',
+                                                    'userPassword' => 'x',
+                                                    'objectClass' => 'posixGroup',
+                                                    'memberUid' => [
+                                                                     'bestaatwel3'
+                                                                   ]
                                                   }
                              },
                  'users' => {
@@ -41,8 +67,9 @@ $VAR1 = bless( {
                                                 'description' => 'ddddeesssccc',
                                                 'objectClass' => 'shadowAccount',
                                                 'shadowMin' => '0',
-                                                'gidNumber' => '5001',
                                                 'shadowExpire' => '0',
+                                                'gidNumber' => '5001',
+                                                'userPasswordIntern' => '*',
                                                 'loginShell' => '/home/bash'
                                               },
                               'bestaatwel2' => {
@@ -53,9 +80,23 @@ $VAR1 = bless( {
                                                  'objectClass' => 'posixAccount',
                                                  'description' => 'ddddeesssccc',
                                                  'gidNumber' => '5003',
+                                                 'userPasswordIntern' => '*',
+                                                 'gecos' => ',,,,',
+                                                 'userPassword' => '*',
+                                                 'loginShell' => '/home/dash'
+                                               },
+                              'bestaatwel3' => {
+                                                 'uid' => 'bestaatwel3',
+                                                 'cn' => 'bestaatwel3',
+                                                 'homeDirectory' => '/home/bestaatwel3',
+                                                 'uidNumber' => '5003',
+                                                 'objectClass' => 'posixAccount',
+                                                 'description' => 'ddddeesssccc',
+                                                 'gidNumber' => '5004',
+                                                 'userPasswordIntern' => '*',
                                                  'gecos' => ',,,,',
                                                  'userPassword' => '*',
                                                  'loginShell' => '/home/dash'
                                                }
                             }
-               }, 'LdapData' );
+               }, 'FlatLdap::Data' );

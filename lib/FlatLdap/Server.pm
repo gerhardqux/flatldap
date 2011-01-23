@@ -78,7 +78,8 @@ sub search {
 	warn "Searching...\n" if $config->{debug};
 	warn Dumper($reqData) if $config->{debug};
 
-	my $base = $reqData->{'baseObject'};
+	# TODO: cmp baseObject against config
+	my $base = $config->{base};
 	
 	# plain die if dn contains 'dying'
 	die("panic") if $base =~ /dying/;
