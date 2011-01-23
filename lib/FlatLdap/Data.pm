@@ -33,7 +33,8 @@ sub readFiles
 		my $obj = $self->{users}{$row[0]};
 
 		$obj->{uid} = $row[0];
-		$obj->{userPassword} = $row[1];
+		$obj->{userPasswordIntern} = $row[1];
+		$obj->{userPassword} = '*';
 		$obj->{uidNumber} = $row[2];
 		$obj->{gidNumber} = $row[3];
 		$obj->{gecos} = $row[4];
@@ -58,7 +59,8 @@ sub readFiles
 
 		my $obj = @{$self->{users}}{$uid};
 
-		$obj->{userPassword} = $row[1];
+		$obj->{userPasswordIntern} = $row[1];
+		$obj->{userPassword} = '*';
 		$obj->{shadowLastChange} = $row[2];
 		$obj->{shadowMax} = $row[3];
 		$obj->{shadowMin} = $row[4];
