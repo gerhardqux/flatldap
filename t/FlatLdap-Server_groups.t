@@ -25,7 +25,7 @@ ok($result->{resultCode} == LDAP_SUCCESS, "bind succeeded");
 
 my @result = $server->search( {
           'timeLimit' => 0,    
-          'baseObject' => 'dc=qrux,dc=nl',
+          'baseObject' => 'dc=qrux, dc=nl',
           'filter' => {        
                         'and' => [
                                    {
@@ -68,7 +68,7 @@ ok($result[2]->{asn}->{objectName} eq 'cn=hackersgr, ou=Groups, dc=qrux, dc=nl',
 
 @result = $server->search( {
           'timeLimit' => 0,    
-          'baseObject' => 'dc=qrux,dc=nl',
+          'baseObject' => 'dc=qrux, dc=nl',
           'filter' => {        
                         'and' => [
                                    {
@@ -112,7 +112,7 @@ ok(!defined $result[2], "result[2] !exists");
 #$config->{debug} = 1;
 @result = $server->search( {
           'timeLimit' => 0,
-          'baseObject' => 'dc=qrux,dc=nl',
+          'baseObject' => 'dc=qrux, dc=nl',
           'filter' => {
                         'and' => [
                                    {

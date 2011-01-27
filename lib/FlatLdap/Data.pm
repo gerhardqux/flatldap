@@ -42,7 +42,7 @@ sub readFiles
 		$obj->{loginShell} = $row[6];
 		$obj->{cn} = $row[0];
 		$obj->{description} = 'ddddeesssccc';
-		$obj->{objectClass} = 'posixAccount';
+		$obj->{objectClass} = ['posixAccount'];
 
 	}
 	close($fh);
@@ -68,7 +68,7 @@ sub readFiles
 		$obj->{shadowInactive} = $row[6];
 		$obj->{shadowExpire} = $row[7];
 		$obj->{shadowFlag} = $row[8];
-		$obj->{objectClass} = 'shadowAccount';
+		push(@{$obj->{objectClass}}, 'shadowAccount');
 	}
 	close $fh;
 
@@ -89,7 +89,7 @@ sub readFiles
 		$obj->{gidNumber} = $row[2];
 		$obj->{memberUid} = [split(/,/, $row[3]) ] ;
 		$obj->{uniqueMember} = '';
-		$obj->{objectClass} = 'posixGroup';
+		$obj->{objectClass} = ['posixGroup'];
 	}
 	close($fh);
 

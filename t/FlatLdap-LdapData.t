@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use Test::Simple tests => 9;
+use Test::More tests => 9;
 
 use FlatLdap::Data;
 use FlatLdap::Config;
@@ -20,5 +20,5 @@ ok($ldapdata->{users}->{bestaatwel}->{shadowMax} == 99999, '  bestaatwel has sha
 ok(defined $ldapdata->{groups}, 'groups are defined');
 ok(defined $ldapdata->{groups}->{bestaatwel2gr}, '  bestaatwel2gr is defined');
 ok($ldapdata->{groups}->{bestaatwel2gr}->{gidNumber} == 5003, '  bestaatwel2gr has gidNumber 5003');
-ok($ldapdata->{groups}->{bestaatwel2gr}->{objectClass} eq "posixGroup", '  bestaatwel2gr has objectClass posixGroup');
+is_deeply($ldapdata->{groups}->{bestaatwel2gr}->{objectClass}, [ "posixGroup"], '  bestaatwel2gr has objectClass posixGroup');
 
