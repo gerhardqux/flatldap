@@ -8,6 +8,7 @@ use feature "switch";
 use Data::Dumper;
 
 use FlatLdap::Schema;
+use FlatLdap::Config;
 
 use vars qw( $schema );
 
@@ -61,57 +62,70 @@ sub evaluate
   my $subject = $filter->{$cmd[0]};
 
   given($cmd[0]) {
-    when ('and') {
-      for (@{$subject}) {
-        return 0 unless $self->evaluate($_, $obj);
-      }
-      return 1;
-    }
-
-    when ('or') {
-      for (@{$subject}) {
-        return 1 if $self->evaluate($_, $obj);
-      }
-      return 0;
-    }
-
-    when ('not') {
-      return ! $self->evaluate($subject->[0], $obj);
-    }
-
-    when ('equalityMatch') {
-
-      # Sanity-check, to see if someone is fooling with us
-      # Only compare valid object-fields (from posixAccounts and posixGroups)
-      my @arr = grep {
-        m/$subject->{attributeDesc}/
-      } @{$schema->{posixAccount}}, @{$schema->{posixGroup}}, 'objectClass';
-      unless (@arr) {
-        warn "Unknown key requested in attributeDesc: ".$subject->{attributeDesc}."\n";
-        return 0;
-      }
-
-      # Sanity check, assert attributeDesc is set
-      unless ($obj->{$subject->{attributeDesc}}) {
-        warn "AttributeDesc not set\n";
-        return 0;
-      }
-
-      if (ref($obj->{$subject->{attributeDesc}}) eq 'ARRAY') {
-        for (@{$obj->{$subject->{attributeDesc}}}) {
-          return 1 if $_ eq $subject->{assertionValue};
-        }
-      }
-      elsif ( $obj->{$subject->{attributeDesc}} eq $subject->{assertionValue}) {
-         return 1;
-      }
-      return 0;
-    }
-
+    when ('and')           { return $self->evalAnd($subject, $obj); };
+    when ('or')            { return $self->evalOr($subject, $obj); };
+    when ('not')           { return ! $self->evaluate($subject->[0], $obj) };
+    when ('equalityMatch') { return $self->evalEqMatch($subject, $obj); };
     default { warn "Unknown command: $cmd[0]\n" }
   }
   
   return;
+}
+
+sub evalAnd
+{
+  my ($self, $subject, $obj) = @_;
+
+  for (@{$subject}) {
+    return 0 unless $self->evaluate($_, $obj);
+  }
+
+  return 1;
+}
+
+sub evalOr
+{
+  my ($self, $subject, $obj) = @_;
+
+  for (@{$subject}) {
+    return 1 if $self->evaluate($_, $obj);
+  }
+
+  return 0;
+}
+
+sub err
+{
+  my $config = new FlatLdap::Config();
+  warn @_ if $config->{verbose};
+  return 0; # no match
+}
+
+sub evalEqMatch
+{
+  my ($self, $subject, $obj) = @_;
+
+  my $key = $subject->{attributeDesc};
+  my $value = $subject->{assertionValue};
+
+  # Assert $key is whitelisted
+  return err( "Unknown key requested in attributeDesc: ", $key, "\n" )
+    unless grep {
+      m/^$key$/
+    } @{$schema->{posixAccount}}, @{$schema->{posixGroup}}, 'objectClass';
+
+  # Assert attributeDesc is set
+  return err( "AttributeDesc not set\n")
+    unless ($obj->{$key});
+
+  if (ref($obj->{$key}) eq 'ARRAY') {
+    for (@{$obj->{$key}}) {
+      return 1 if $_ eq $value;
+    }
+  }
+  else {
+   return ( $obj->{$key} eq $value);
+  }
 }
 
 1;

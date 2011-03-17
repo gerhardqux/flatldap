@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::Simple tests => 10;
+use Test::Simple tests => 11;
 
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_UNWILLING_TO_PERFORM);
 use lib 't/lib';
@@ -63,4 +63,32 @@ ok($result[2]->{attrs}->{uidnumber}->[0] == 5002, "  user 'bestaatwel2' has uidN
 ok($result[2]->{asn}->{objectName} eq 'cn=bestaatwel2, ou=Users, dc=qrux, dc=nl',
  "  objectName 'bestaatwel2' correct");
 
+@result = $server->search( {
+          'timeLimit' => 0,
+          'baseObject' => 'dc=qrux, dc=nl',
+          'filter' => {
+                        'equalityMatch' => {
+                                             'assertionValue' => 'doesntExist',
+                                             'attributeDesc' => 'someValue'
+                                           }
+                      },
+          'sizeLimit' => 0,
+          'typesOnly' => 0,
+          'derefAliases' => 0,
+          'attributes' => [
+                            'uid',
+                            'userPassword',
+                            'uidNumber',
+                            'gidNumber',
+                            'cn',
+                            'homeDirectory',
+                            'loginShell',
+                            'gecos',
+                            'description',
+                            'objectClass'
+                          ],
+          'scope' => 2
+        });
 
+
+ok(!defined $result[1], "result[1] doesnt exist");
