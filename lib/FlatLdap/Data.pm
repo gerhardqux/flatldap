@@ -29,6 +29,7 @@ sub readFiles
 	while(<$fh>) {
 		chomp;
 		my @row = split(':');
+		next if $row[2] <= 1000;
 		$self->{users}{$row[0]} = {};
 		my $obj = $self->{users}{$row[0]};
 
@@ -79,6 +80,7 @@ sub readFiles
 	while(<$fh>) {
 		chomp;
 		my @row = split(':');
+		next if $row[2] <= 1000;
 		my $gid = $row[0];
 		$self->{groups}->{$gid} = {};
 		my $obj = $self->{groups}->{$gid};
